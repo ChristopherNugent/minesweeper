@@ -21,9 +21,9 @@ class Tile:
             elif self.adjacent:
                 return str(self.adjacent)
             else:
-                return '-'
+                return '.'
         else:
-            return '?'
+            return '-'
 
 
     def __str__(self):
