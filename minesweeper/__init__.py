@@ -16,7 +16,12 @@ class Tile:
 
     def to_str(self, show: bool=False) -> str:
         if self.checked or show:
-            return 'M' if self.mine else str(self.adjacent)
+            if self.mine:
+                return 'M'
+            elif self.adjacent:
+                return str(self.adjacent)
+            else:
+                return '-'
         else:
             return '?'
 
@@ -25,14 +30,21 @@ class Tile:
         return self.to_str()
 
 
+
 class Game:
 
     def __init__(self, x: int, y: int, num_mines: int):
+        if x < 1 or y < 1:
+            raise ValueError('No negative board sizes!')
         if num_mines > x * y:
             raise ValueError('Not enough space on board')
+        if num_mines < 0:
+            raise  ValueError('Negative mines?')
         self.x = x
         self.y = y
         self.num_mines = num_mines
+        self.alive = True
+        self.revealed = 0
 
         self.board = [ [Tile(False) for i in range(y)] for j in range(x)]
 
@@ -44,25 +56,28 @@ class Game:
             self.board[i][j].mine = True
 
 
-    def check_single(self, x, y) -> bool:
+    def check_single(self, x, y):
         if x < 0 or y < 0:
             raise ValueError('No negative coords')
         elif x > self.x or y > self.y:
             raise ValueError('Coords beyond board')
 
+        if self.board[x][y].checked:
+            return
+
         mine_clicked = self.board[x][y].check()
 
         if mine_clicked:
-            print('You lose!')
-            return False
+            self.alive = False
+            return
 
+        self.revealed += 1
         # Update count
         offsets = itertools.product(range(-1, 2), range(-1, 2))
         mines_nearby = sum([1 for i, j in offsets 
                             if self._in_bounds(x + i, y + j)
                                and self.board[x + i][y + j].mine])
         self.board[x][y].adjacent = mines_nearby
-        return True
 
 
     def check(self, x, y):
@@ -81,8 +96,10 @@ class Game:
     def _in_bounds(self, x, y) -> bool:
         return not (x < 0 or y < 0 or x >= self.x or y >= self.y)
 
+
     def _checkable(self, x, y) -> bool:
             return self._in_bounds(x,y) and not self.board[x][y].checked
+
                 
     def _fill_adjacents(self):
         all_coords = itertools.product(range(self.x), range(self.y))
@@ -94,12 +111,50 @@ class Game:
                                    and self.board[x + i][y + j].mine])
             self.board[x][y].adjacent = mines_nearby
 
+
+    def game_won(self):
+        return self.revealed >= self.x * self.y - self.num_mines \
+               or self.num_mines == 0
+
+
     def to_str(self, show=False) -> str:
+        if show:
+            self._fill_adjacents()
         return "\n".join([' '.join([self.board[x][y].to_str(show) 
                for x in range(self.x)]) 
                for y in range(self.y)])
 
 
-
     def __str__(self):
         return self.to_str()
+
+
+
+if __name__ == '__main__':
+    print('Welcome to Minesweeper!')
+
+    while True:
+        try:
+            x = int(input('Enter X size: '))
+            y = int(input('Enter Y size: '))
+            m = int(input('Enter number of mines: '))
+            g = Game(x, y, m)
+        except Exception:
+            print('Something went wrong...')
+            continue
+        break
+
+    while g.alive:
+        if g.game_won():
+            print(g.to_str(show=True))
+            print('You won the game!')
+            break
+        print(g)
+        try:
+            x = int(input('Enter X of guess (0 - {}): '.format(g.x - 1)))
+            y = int(input('Enter Y of guess (0 - {}): '.format(g.y - 1)))
+            g.check(x, y)
+        except Exception:
+            print('Something went wrong...')
+            continue
+        print('\n')
