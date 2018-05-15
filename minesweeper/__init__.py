@@ -14,7 +14,7 @@ class Tile:
         return self.mine
 
 
-    def to_string(self, show: bool=False) -> str:
+    def to_str(self, show: bool=False) -> str:
         if self.checked or show:
             return 'M' if self.mine else str(self.adjacent)
         else:
@@ -22,7 +22,7 @@ class Tile:
 
 
     def __str__(self):
-        return self.to_string()
+        return self.to_str()
 
 
 class Game:
@@ -94,12 +94,12 @@ class Game:
                                    and self.board[x + i][y + j].mine])
             self.board[x][y].adjacent = mines_nearby
 
-    def to_string(self, show=False) -> str:
-        return "\n".join([' '.join([self.board[x][y].to_string(show) 
+    def to_str(self, show=False) -> str:
+        return "\n".join([' '.join([self.board[x][y].to_str(show) 
                for x in range(self.x)]) 
                for y in range(self.y)])
 
 
 
     def __str__(self):
-        return self.to_string()
+        return self.to_str()
